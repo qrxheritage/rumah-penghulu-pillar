@@ -1,14 +1,15 @@
 # Rumah Penghulu Abu Seman - Pillars Educational Website
 
-An interactive educational website about the traditional Malay architecture of Rumah Penghulu Abu Seman, featuring 3D models, videos, and analytics tracking.
+An interactive educational website about the traditional Malay architecture of Rumah Penghulu Abu Seman, featuring 3D models, videos, quizzes, and analytics tracking.
 
 ## Features
 
 - 📱 Responsive design with multi-language support (English, Malay, Chinese)
 - 🎨 Interactive 3D model viewer
-- 📊 Visitor engagement analytics
-- 🎯 Quiz integration
-- 💬 Feedback collection
+- 🎬 3D construction animation video
+- 📝 Interactive knowledge quiz (4 questions)
+- 📊 Visitor engagement analytics with completion tracking
+- 💬 Feedback collection via Google Forms
 
 ## Setup Instructions
 
@@ -54,18 +55,26 @@ Or connect your GitHub repository to Vercel for automatic deployments.
 ## Analytics Dashboard
 
 Access the analytics dashboard at `/dashboard.html` to view:
-- Total clicks on all interactive elements
-- 3D model views
-- Feedback form submissions
-- Quiz attempts
-- Completion rate (percentage of 3D model viewers who took the quiz)
+
+| Metric | Description |
+|--------|-------------|
+| **Total Clicks** | Total clicks on all interactive elements |
+| **3D Model Views** | Number of times visitors opened the 3D model |
+| **Feedback Submissions** | Number of clicks on feedback button |
+| **Quiz Button Clicks** | Visitors who clicked "Take Quiz" on main page |
+| **Quiz Started** | Visitors who started answering questions |
+| **Quiz Completed** | Visitors who finished the quiz |
+| **Completion Rate** | (Quiz Completed ÷ Quiz Button Clicks) × 100% |
+| **Engagement Rate** | (Quiz Started ÷ Quiz Button Clicks) × 100% |
 
 ## Project Structure
 
 ```
-Pillar/
-├── index.html              # Main website
+rumah-penghulu-pillar/
+├── index.html              # Main website with 3D model and content
+├── quiz.html               # Interactive knowledge quiz
 ├── dashboard.html          # Analytics dashboard
+├── styles.css              # Main stylesheet
 ├── public/                 # Static assets
 │   ├── pillar_3D_model.glb
 │   └── rumah-penghulu-abu-seman-3d.mp4
@@ -73,16 +82,25 @@ Pillar/
 │   ├── track-click.js      # Track button clicks
 │   └── get-stats.js        # Retrieve analytics
 ├── package.json
-├── vercel.json            # Vercel configuration
+├── vercel.json             # Vercel configuration
+├── SETUP_GUIDE.md          # Detailed setup instructions
+├── QUIZ_TRACKING_GUIDE.md  # Quiz analytics documentation
+├── LICENSE
 └── README.md
 ```
 
 ## How Analytics Work
 
-1. When visitors click on buttons (3D Model, Feedback, Quiz), a tracking event is sent to `/api/track-click`
-2. The serverless function stores the click count in Vercel KV (Redis)
-3. The dashboard fetches statistics from `/api/get-stats`
-4. Completion rate = (Quiz Clicks / 3D Model Views) × 100%
+1. **Button Tracking**: When visitors click on buttons (3D Model, Feedback, Quiz), a tracking event is sent to `/api/track-click`
+2. **Quiz Start Tracking**: When a visitor first clicks an answer option in the quiz, `quiz-start` is tracked
+3. **Quiz Completion Tracking**: When a visitor submits the quiz and sees results, `quiz-complete` is tracked
+4. **Storage**: The serverless function stores the click count in Vercel KV (Redis)
+5. **Dashboard**: The dashboard fetches statistics from `/api/get-stats`
+
+### Key Formulas
+
+- **Completion Rate** = (Quiz Completed ÷ Quiz Button Clicks) × 100%
+- **Engagement Rate** = (Quiz Started ÷ Quiz Button Clicks) × 100%
 
 ## Environment Variables (Vercel KV)
 
@@ -103,4 +121,3 @@ MIT License - Feel free to use this for educational purposes.
 
 - Badan Warisan Malaysia - 3D Construction Video
 - Traditional Malay Architecture Heritage
-
