@@ -8,9 +8,7 @@
     "build": "echo 'Static site - no build needed'",
     "deploy": "vercel --prod"
   },
-  "dependencies": {
-    "@vercel/kv": "^1.0.1"
-  },
+  "dependencies": {},
   "devDependencies": {},
   "keywords": [
     "heritage",
@@ -20,4 +18,3 @@
   "author": "",
   "license": "MIT"
 }
-

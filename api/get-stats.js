@@ -1,5 +1,6 @@
-// Vercel Serverless Function to get analytics statistics
-import { kv } from '@vercel/kv';
+// Vercel Serverless Function to get analytics statistics using JSONBin.io
+
+const JSONBIN_API_URL = 'https://api.jsonbin.io/v3/b';
 
 export default async function handler(req, res) {
   // Set CORS headers
@@ -17,14 +18,36 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Get environment variables
+  const BIN_ID = process.env.JSONBIN_BIN_ID;
+  const API_KEY = process.env.JSONBIN_API_KEY;
+
+  if (!BIN_ID || !API_KEY) {
+    return res.status(500).json({ error: 'JSONBin configuration missing' });
+  }
+
   try {
-    // Get all click counts
-    const totalClicks = await kv.get('clicks:total') || 0;
-    const modelClicks = await kv.get('clicks:3d-model') || 0;
-    const feedbackClicks = await kv.get('clicks:feedback') || 0;
-    const quizClicks = await kv.get('clicks:quiz') || 0;
-    const quizStarts = await kv.get('clicks:quiz-start') || 0;
-    const quizCompletions = await kv.get('clicks:quiz-complete') || 0;
+    // Get data from JSONBin
+    const response = await fetch(`${JSONBIN_API_URL}/${BIN_ID}/latest`, {
+      headers: {
+        'X-Master-Key': API_KEY
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch data from JSONBin');
+    }
+
+    const jsonData = await response.json();
+    const data = jsonData.record || {};
+
+    // Extract click counts
+    const totalClicks = data.clicks_total || 0;
+    const modelClicks = data.clicks_3d_model || 0;
+    const feedbackClicks = data.clicks_feedback || 0;
+    const quizClicks = data.clicks_quiz || 0;
+    const quizStarts = data.clicks_quiz_start || 0;
+    const quizCompletions = data.clicks_quiz_complete || 0;
 
     // Calculate completion rate (quiz completions / quiz button clicks)
     const completionRate = quizClicks > 0 
@@ -36,9 +59,6 @@ export default async function handler(req, res) {
       ? ((quizStarts / quizClicks) * 100).toFixed(2)
       : 0;
 
-    // Get recent click history for quiz
-    const quizHistory = await kv.lrange('clicks:quiz:history', 0, 99) || [];
-
     return res.status(200).json({
       success: true,
       stats: {
@@ -49,8 +69,7 @@ export default async function handler(req, res) {
         quizStarts,
         quizCompletions,
         completionRate: `${completionRate}%`,
-        engagementRate: `${engagementRate}%`,
-        recentQuizClicks: quizHistory.length
+        engagementRate: `${engagementRate}%`
       },
       timestamp: new Date().toISOString()
     });
@@ -60,4 +79,3 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Internal server error' });
   }
 }
-

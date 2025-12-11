@@ -13,24 +13,43 @@ An interactive educational website about the traditional Malay architecture of R
 
 ## Setup Instructions
 
-### 1. Install Dependencies
+### 1. Set Up JSONBin.io (Free Analytics Storage)
 
-```bash
-npm install
+1. Go to [JSONBin.io](https://jsonbin.io) and create a free account
+2. After logging in, go to **API Keys** and copy your **X-Master-Key**
+3. Create a new bin by clicking **Create a Bin** with this initial data:
+
+```json
+{
+  "clicks_total": 0,
+  "clicks_3d_model": 0,
+  "clicks_feedback": 0,
+  "clicks_quiz": 0,
+  "clicks_quiz_start": 0,
+  "clicks_quiz_complete": 0,
+  "last_updated": ""
+}
 ```
 
-### 2. Set Up Vercel KV (for Analytics)
+4. Copy the **Bin ID** from the URL (e.g., `https://jsonbin.io/bin/6761abc...` → the ID is `6761abc...`)
 
-1. Go to [Vercel Dashboard](https://vercel.com/dashboard)
-2. Create a new project or select your existing project
-3. Go to **Storage** → **Create Database** → **KV**
-4. Name it something like "pillar-analytics"
-5. Copy the environment variables provided
-6. Add them to your Vercel project settings
+### 2. Configure Environment Variables
+
+Add these environment variables to your Vercel project:
+
+| Variable | Value |
+|----------|-------|
+| `JSONBIN_BIN_ID` | Your Bin ID from step 3 |
+| `JSONBIN_API_KEY` | Your X-Master-Key from step 2 |
+
+**In Vercel Dashboard:**
+1. Go to your project → **Settings** → **Environment Variables**
+2. Add both variables above
+3. Redeploy your project
 
 ### 3. Local Development
 
-To run locally with the Python server:
+To run locally with Python:
 
 ```bash
 python -m http.server 8000
@@ -41,13 +60,15 @@ Then open http://localhost:8000 in your browser.
 To test with Vercel serverless functions locally:
 
 ```bash
-npm run dev
+vercel dev
 ```
+
+(Note: Set environment variables in `.env.local` file for local development)
 
 ### 4. Deploy to Vercel
 
 ```bash
-npm run deploy
+vercel --prod
 ```
 
 Or connect your GitHub repository to Vercel for automatic deployments.
@@ -79,8 +100,8 @@ rumah-penghulu-pillar/
 │   ├── pillar_3D_model.glb
 │   └── rumah-penghulu-abu-seman-3d.mp4
 ├── api/                    # Vercel serverless functions
-│   ├── track-click.js      # Track button clicks
-│   └── get-stats.js        # Retrieve analytics
+│   ├── track-click.js      # Track button clicks (JSONBin.io)
+│   └── get-stats.js        # Retrieve analytics (JSONBin.io)
 ├── package.json
 ├── vercel.json             # Vercel configuration
 ├── SETUP_GUIDE.md          # Detailed setup instructions
@@ -94,7 +115,7 @@ rumah-penghulu-pillar/
 1. **Button Tracking**: When visitors click on buttons (3D Model, Feedback, Quiz), a tracking event is sent to `/api/track-click`
 2. **Quiz Start Tracking**: When a visitor first clicks an answer option in the quiz, `quiz-start` is tracked
 3. **Quiz Completion Tracking**: When a visitor submits the quiz and sees results, `quiz-complete` is tracked
-4. **Storage**: The serverless function stores the click count in Vercel KV (Redis)
+4. **Storage**: The serverless function stores the click count in JSONBin.io (free JSON storage)
 5. **Dashboard**: The dashboard fetches statistics from `/api/get-stats`
 
 ### Key Formulas
@@ -102,16 +123,12 @@ rumah-penghulu-pillar/
 - **Completion Rate** = (Quiz Completed ÷ Quiz Button Clicks) × 100%
 - **Engagement Rate** = (Quiz Started ÷ Quiz Button Clicks) × 100%
 
-## Environment Variables (Vercel KV)
+## Environment Variables
 
-These are automatically added when you create a Vercel KV database:
-
-```
-KV_REST_API_URL
-KV_REST_API_TOKEN
-KV_REST_API_READ_ONLY_TOKEN
-KV_URL
-```
+| Variable | Description |
+|----------|-------------|
+| `JSONBIN_BIN_ID` | Your JSONBin.io Bin ID |
+| `JSONBIN_API_KEY` | Your JSONBin.io X-Master-Key |
 
 ## License
 

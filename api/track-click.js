@@ -1,5 +1,6 @@
-// Vercel Serverless Function to track button clicks
-import { kv } from '@vercel/kv';
+// Vercel Serverless Function to track button clicks using JSONBin.io
+
+const JSONBIN_API_URL = 'https://api.jsonbin.io/v3/b';
 
 export default async function handler(req, res) {
   // Set CORS headers
@@ -17,6 +18,14 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Get environment variables
+  const BIN_ID = process.env.JSONBIN_BIN_ID;
+  const API_KEY = process.env.JSONBIN_API_KEY;
+
+  if (!BIN_ID || !API_KEY) {
+    return res.status(500).json({ error: 'JSONBin configuration missing' });
+  }
+
   try {
     const { buttonType } = req.body;
 
@@ -24,23 +33,49 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Button type is required' });
     }
 
+    // Get current data from JSONBin
+    const getResponse = await fetch(`${JSONBIN_API_URL}/${BIN_ID}/latest`, {
+      headers: {
+        'X-Master-Key': API_KEY
+      }
+    });
+
+    if (!getResponse.ok) {
+      throw new Error('Failed to fetch data from JSONBin');
+    }
+
+    const jsonData = await getResponse.json();
+    const data = jsonData.record || getDefaultData();
+
     // Increment the specific button click count
-    const clickCount = await kv.incr(`clicks:${buttonType}`);
+    const clickKey = `clicks_${buttonType.replace(/-/g, '_')}`;
+    data[clickKey] = (data[clickKey] || 0) + 1;
     
     // Also increment total clicks
-    await kv.incr('clicks:total');
+    data.clicks_total = (data.clicks_total || 0) + 1;
 
     // Record timestamp
     const timestamp = new Date().toISOString();
-    await kv.lpush(`clicks:${buttonType}:history`, timestamp);
-    
-    // Keep only last 1000 entries
-    await kv.ltrim(`clicks:${buttonType}:history`, 0, 999);
+    data.last_updated = timestamp;
+
+    // Update JSONBin
+    const updateResponse = await fetch(`${JSONBIN_API_URL}/${BIN_ID}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Master-Key': API_KEY
+      },
+      body: JSON.stringify(data)
+    });
+
+    if (!updateResponse.ok) {
+      throw new Error('Failed to update JSONBin');
+    }
 
     return res.status(200).json({
       success: true,
       buttonType,
-      clickCount,
+      clickCount: data[clickKey],
       timestamp
     });
 
@@ -50,3 +85,15 @@ export default async function handler(req, res) {
   }
 }
 
+// Default data structure for new bins
+function getDefaultData() {
+  return {
+    clicks_total: 0,
+    clicks_3d_model: 0,
+    clicks_feedback: 0,
+    clicks_quiz: 0,
+    clicks_quiz_start: 0,
+    clicks_quiz_complete: 0,
+    last_updated: new Date().toISOString()
+  };
+}
